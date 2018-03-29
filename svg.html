@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>SVG Drawing</title>
+		<script src="https://unpkg.com/jquery"></script>
+		<script src="https://unpkg.com/vue"></script>
+		<style>
+		svg {
+			background-color: #eee;
+		}
+		svg.unselectable {
+			-moz-user-select: -moz-none;
+			-webkit-user-select: none;
+			-ms-user-select: none;
+			user-select: none;
+		}
+		svg rect {
+			fill: #fff;
+			stroke: #000;
+		}
+		svg circle {
+			fill: none;
+		}
+		svg circle.handler {
+			fill: #eee;
+			stroke: #000;
+		}
+		svg .shadow {
+			-webkit-filter: drop-shadow(2px 2px 3px #444);
+			        filter: drop-shadow(2px 2px 3px #444);
+		}
+		svg text {
+			text-anchor: middle;
+			alignment-baseline: middle; non va in firefox
+		}
+		svg path {
+			fill: none;
+			stroke: black;
+			stroke-width: 1.5px;
+		}
+		svg marker path {
+			stroke: none;
+			fill: black;
+		}
+		svg path.connector {
+			fill: none;
+			stroke: gray;
+			stroke-width: 1.5px;
+			pointer-events: none; /* Ignore mouse events on this path */
+		}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<div id="app" class="controls">
+				<div>
+					<button>Save JSON to console</button><br>
+					<button>Load JSON from API</button><br>
+					<button>Add a layer</button>
+				</div>
+				<div>
+					<svg xmlns="http://www.w3.org/2000/svg"
+						:width="width" :height="height"
+						class="unselectable"
+						@mousedown="globalMouseDown"
+						@mouseup="globalMouseUp"
+						@mousemove="globalMouseMove">
+						<defs>
+							<marker id='arrow-marker' orient='auto' markerWidth='50' markerHeight='50' refX='14' refY='4'>
+								<path d='M 0 0 V 8 L 16 4 Z' />
+							</marker>
+						</defs>
+						<template v-for="(node, nid) in nodes">
+							<g draggable="false" class="shadow">
+								<g @mousedown.stop="nodePressed(nid, $event)" @mouseup="nodeReleased(nid, $event)">
+									<rect :x="node.x - node.w*0.5" :y="node.y - node.h*0.5" :width="node.w" :height="node.h" />
+									<circle :cx="node.x" :cy="node.y" :r="node.r" />
+									<text :x="node.x" :y="node.y" :width="2*node.r" :height="node.r">Foo</text>
+								</g>
+								<circle v-for="(hand, hid) in handlers[nid]"
+									class='handler'
+									:cx="hand.x" :cy="hand.y" :r="hand.r"
+									@mousedown.stop="handlerPressed(nid, hid, $event)"
+									@mouseup="handlerReleased(nid, hid, $event)" />
+							</g>
+						</template>
+						<template v-for="(path, pid) in paths">
+							<path :d="path.data" class="shadow"
+								@mousedown.stop="localMouseDown(pid, $event)"
+								@mouseup="localMouseUp(pid, $event)"
+								marker-end="url(#arrow-marker)" /> 
+						</template>
+						<template v-for="(path, pid) in connectors">
+							<path :d="path.data"
+								class="connector"
+								@mousedown.stop="localMouseDown(pid, $event)"
+								@mouseup="localMouseUp(pid, $event)"
+								marker-end="url(#arrow-marker)" /> 
+						</template>
+					</svg>
+				</div>
+				<ul>
+					<li v-for="msg in last_messages">{{msg}}</li>
+				</ul>
+			</div>
+		</div>
+		<script src="base.js"></script>
+	</body>
+</html>
